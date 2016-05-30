@@ -47,35 +47,32 @@ var DAOSchema = new Schema({
     'formatCreateTime': String,
     'adWord': Number,
     'totalCount': Number,
-    'searchScore': Number,
-    'create_date': {
-        'type': Date,
-        'default': Date.now
-    }
+    'searchScore': Number
 });
-var model = mongodb.mongoose.model("lagou", DAOSchema);
+var model = mongodb.mongoose.model('lagou', DAOSchema);
 var DAO = function() {};
-DAO.prototype.findOneAndUpdate = function(obj, cb) {
-    var query = {
-        positionId: obj.positionId
-    };
-    model.findOneAndUpdate(query, obj, {
+DAO.prototype.findOneAndUpdate = function(params, cb) {
+    // https://docs.mongodb.com/manual/reference/command/findAndModify/
+    model.findOneAndUpdate({
+        positionId: params.positionId
+    }, params, {
+        // 如果要求变化了就修改，则需要增加update属性
         upsert: true
     }, function(err, doc) {
         if (err) {
             return new Error(err);
         }
-        typeof cb === 'function' && cb(err);
+        typeof cb === 'function' && cb(err, doc);
     });
 };
 DAO.prototype.findByName = function(name, cb) {
     model.findOne({
         name: name
-    }, function(err, obj) {
+    }, function(err, params) {
         if (err) {
             return new Error(err);
         }
-        typeof cb === 'function' && cb(err, obj);
+        typeof cb === 'function' && cb(err, params);
     });
 };
 module.exports = new DAO();

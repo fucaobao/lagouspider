@@ -1,9 +1,20 @@
 var request = require('request');
 var lagou = require('./models/dao.js');
 var req_url = 'http://www.lagou.com/jobs/positionAjax.json';
+var argv = process.argv;
 main();
 
 function main() {
+    if (argv.indexOf('-c') === -1 || argv.indexOf('-p') === -1) {
+        console.log([
+            'WARNING',
+            'usage: node [city] [position]',
+            '',
+            'options:',
+            '  -c city       城市(默认为"全国")',
+            '  -p position   岗位名称(无默认值)'
+        ].join('\n'));
+    }
     getRequest(getArgs(), function(body) {
         var maxPN = getMaxPN(body);
         maintask(maxPN);
@@ -20,7 +31,9 @@ function maintask(maxPN) {
         getRequest(params, function(body) {
             var json = JSON.parse(body);
             json.content.positionResult.result.forEach(function(item, index) {
-                lagou.findOneAndUpdate(item, function() {});
+                item.companyLogo = 'http://www.lagou.com/' + item.companyLogo;
+                //有则不变，没有则增加
+                lagou.findOneAndUpdate(item, function(err, doc) {});
             });
         });
     }
@@ -54,17 +67,16 @@ function getArgs() {
             needAddtionalResult: false,
             first: true,
             pn: 1
-        },
-        args = process.argv;
-    if (args.indexOf('-c') === -1) {
+        };
+    if (argv.indexOf('-c') === -1) {
         params.city = '全国';
     } else {
-        params.city = args[args.indexOf('-c') + 1];
+        params.city = argv[argv.indexOf('-c') + 1];
     }
-    if (args.indexOf('-p') === -1) {
+    if (argv.indexOf('-p') === -1) {
         params.kd = '';
     } else {
-        params.kd = args[args.indexOf('-p') + 1];
+        params.kd = argv[argv.indexOf('-p') + 1];
     }
     return params;
 }
