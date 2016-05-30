@@ -1,20 +1,42 @@
-var req_url = 'http://www.lagou.com/jobs/positionAjax.json';
 var request = require('request');
+var lagou = require('./models/dao.js');
+var req_url = 'http://www.lagou.com/jobs/positionAjax.json';
+main();
 
 function main() {
-    request.post({
-        url: req_url,
-        form: getArgs()
-    }, function(err, httpResponse, body) {
-        if (err) {
-            throw new Error(err);
-        }
+    getRequest(getArgs(), function(body) {
         var maxPN = getMaxPN(body);
         maintask(maxPN);
     });
 }
 
-function maintask(maxPN) {}
+function maintask(maxPN) {
+    var params = getArgs();
+    for (var i = 0; i < maxPN; i++) {
+        params.pn = i + 1;
+        if (i > 0) {
+            params.first = false;
+        }
+        getRequest(params, function(body) {
+            var json = JSON.parse(body);
+            json.content.positionResult.result.forEach(function(item, index) {
+                lagou.findOneAndUpdate(item, function() {});
+            });
+        });
+    }
+}
+
+function getRequest(params, cb) {
+    request.post({
+        url: req_url,
+        form: params
+    }, function(err, httpResponse, body) {
+        if (err) {
+            throw new Error(err);
+        }
+        typeof cb === 'function' && cb(body);
+    });
+}
 
 function getMaxPN(value) {
     if (!value) {
@@ -24,11 +46,12 @@ function getMaxPN(value) {
     var maxPageNo = 30; //拉勾网最大分页为30
     var positionJSON = JSON.parse(value);
     var totalCount = positionJSON.content.positionResult.totalCount;
-    return Math.min(Math.cell(totalCount / pageSize), maxPageNo);
+    return Math.min(Math.ceil(totalCount / pageSize), maxPageNo);
 }
 
 function getArgs() {
     var params = {
+            needAddtionalResult: false,
             first: true,
             pn: 1
         },
@@ -45,4 +68,3 @@ function getArgs() {
     }
     return params;
 }
-main();
