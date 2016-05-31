@@ -1,11 +1,13 @@
 var request = require('request');
-var lagou = require('./models/dao.js');
+var eventproxy = require('eventproxy');
+var lagou = require('./models/dao');
 var req_url = 'http://www.lagou.com/jobs/positionAjax.json';
+var ep = new eventproxy();
 var argv = process.argv;
 main();
 
 function main() {
-    if (argv.indexOf('-c') === -1 || argv.indexOf('-p') === -1) {
+    if (argv.indexOf('-c') === -1 && argv.indexOf('-p') === -1) {
         console.log([
             'WARNING',
             'usage: node [city] [position]',
@@ -33,10 +35,18 @@ function maintask(maxPN) {
             json.content.positionResult.result.forEach(function(item, index) {
                 item.companyLogo = 'http://www.lagou.com/' + item.companyLogo;
                 //有则不变，没有则增加
-                lagou.findOneAndUpdate(item, function(err, doc) {});
+                lagou.findOneAndUpdate(item, function(err, doc) {
+                    // 完成则触发upsert事件
+                    ep.emit('upsert');
+                });
             });
         });
     }
+    // 如果upsert事件触发了maxPN次，则提示出来
+    ep.after('upsert', maxPN, function(value) {
+        console.log('done!');
+        // process.exit();
+    });
 }
 
 function getRequest(params, cb) {

@@ -59,9 +59,6 @@ DAO.prototype.findOneAndUpdate = function(params, cb) {
         // 如果要求变化了就修改，则需要增加update属性
         upsert: true
     }, function(err, doc) {
-        if (err) {
-            return new Error(err);
-        }
         typeof cb === 'function' && cb(err, doc);
     });
 };
@@ -69,9 +66,6 @@ DAO.prototype.findByName = function(name, cb) {
     model.findOne({
         name: name
     }, function(err, params) {
-        if (err) {
-            return new Error(err);
-        }
         typeof cb === 'function' && cb(err, params);
     });
 };
