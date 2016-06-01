@@ -1,24 +1,10 @@
 var http = require('http');
 var request = require('request');
 var eventproxy = require('eventproxy');
-var moment = require('moment'); //时间包
-var lagou = require('./models/dao');
+var moment = require('moment'); //时间包http://momentjs.com/docs/
 var ep = new eventproxy();
-var winston = require('winston');//日志包
-var logger = new (winston.Logger)({
-    transports: [
-        new(winston.transports.File)({
-            name: 'info-file',
-            filename: './logs/filelog-info.log',
-            level: 'info'
-        }),
-        new(winston.transports.File)({
-            name: 'error-file',
-            filename: './logs/filelog-error.log',
-            level: 'error'
-        })
-    ]
-});
+var logger = require('./lib/log');
+var lagou = require('./models/dao');
 
 //相关参数
 var reqUrl = 'http://www.lagou.com/jobs/positionAjax.json';
@@ -43,7 +29,7 @@ function main() {
     setInterval(function() {
         nextTime = Date.now();
         if(count){
-            logger.info('次数：%s，该次循环花费时间%s秒，当前时间：%s', count, (nextTime - currentTime) / 1000, moment().format('YYYY-MM-DD HH:mm:ss.SSS'));
+            logger.info('次数：%s，该次循环花费时间%s秒。', count, (nextTime - currentTime) / 1000);
         }
         currentTime = nextTime;
         getRequest(reqParams, function(body) {

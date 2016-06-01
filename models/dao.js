@@ -51,6 +51,11 @@ var DAOSchema = new Schema({
 });
 var model = mongodb.mongoose.model('lagou', DAOSchema);
 var DAO = function() {};
+/**
+ * [findOneAndUpdate description]
+ * @param  {Object}   params upsert对象
+ * @param  {Function} cb     upsert后的回调
+ */
 DAO.prototype.findOneAndUpdate = function(params, cb) {
     // https://docs.mongodb.com/manual/reference/command/findAndModify/
     model.findOneAndUpdate({
@@ -62,10 +67,13 @@ DAO.prototype.findOneAndUpdate = function(params, cb) {
         typeof cb === 'function' && cb(err, doc);
     });
 };
-DAO.prototype.findByName = function(name, cb) {
-    model.findOne({
-        name: name
-    }, function(err, params) {
+/**
+ * [findOne description]
+ * @param  {Object}   params JSON对象，查询条件
+ * @param  {Function} cb     查询后的回调
+ */
+DAO.prototype.findOne = function(params, cb) {
+    model.findOne(params, function(err, params) {
         typeof cb === 'function' && cb(err, params);
     });
 };
