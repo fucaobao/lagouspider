@@ -1,11 +1,34 @@
+var http = require('http');
 var request = require('request');
 var eventproxy = require('eventproxy');
+var moment = require('moment'); //时间包
 var lagou = require('./models/dao');
-var req_url = 'http://www.lagou.com/jobs/positionAjax.json';
 var ep = new eventproxy();
-var argv = process.argv;
-main();
+var winston = require('winston');//日志包
+var logger = new (winston.Logger)({
+    transports: [
+        new(winston.transports.File)({
+            name: 'info-file',
+            filename: './logs/filelog-info.log',
+            level: 'info'
+        }),
+        new(winston.transports.File)({
+            name: 'error-file',
+            filename: './logs/filelog-error.log',
+            level: 'error'
+        })
+    ]
+});
 
+//相关参数
+var reqUrl = 'http://www.lagou.com/jobs/positionAjax.json';
+var argv = process.argv;
+var reqParams = getArgs();
+var count = 0;//执行次数
+var currentTime = 0;
+var nextTime = 0;
+
+main();
 function main() {
     if (argv.indexOf('-c') === -1 && argv.indexOf('-p') === -1) {
         console.log([
@@ -17,20 +40,26 @@ function main() {
             '  -p position   岗位名称(无默认值)'
         ].join('\n'));
     }
-    getRequest(getArgs(), function(body) {
-        var maxPN = getMaxPN(body);
-        maintask(maxPN);
-    });
+    setInterval(function() {
+        nextTime = Date.now();
+        if(count){
+            logger.info('次数：%s，该次循环花费时间%s秒，当前时间：%s', count, (nextTime - currentTime) / 1000, moment().format('YYYY-MM-DD HH:mm:ss.SSS'));
+        }
+        currentTime = nextTime;
+        getRequest(reqParams, function(body) {
+            var maxPN = getMaxPN(body);
+            maintask(maxPN);
+        });
+    }, 1000 * 60);
 }
 
 function maintask(maxPN) {
-    var params = getArgs();
     for (var i = 0; i < maxPN; i++) {
-        params.pn = i + 1;
+        reqParams.pn = i + 1;
         if (i > 0) {
-            params.first = false;
+            reqParams.first = false;
         }
-        getRequest(params, function(body) {
+        getRequest(reqParams, function(body) {
             var json = JSON.parse(body);
             json.content.positionResult.result.forEach(function(item, index) {
                 item.companyLogo = 'http://www.lagou.com/' + item.companyLogo;
@@ -44,17 +73,17 @@ function maintask(maxPN) {
     }
     // 如果upsert事件触发了maxPN次，则提示出来
     ep.after('upsert', maxPN, function(value) {
-        console.log('done!');
-        // process.exit();
+        count += 1;
     });
 }
 
 function getRequest(params, cb) {
     request.post({
-        url: req_url,
+        url: reqUrl,
         form: params
     }, function(err, httpResponse, body) {
         if (err) {
+            logger.error(err);
             throw new Error(err);
         }
         typeof cb === 'function' && cb(body);
