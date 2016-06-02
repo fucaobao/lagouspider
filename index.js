@@ -1,4 +1,5 @@
 var http = require('http');
+var Q = require('q');
 var request = require('request');
 var eventproxy = require('eventproxy');
 var moment = require('moment'); //时间包http://momentjs.com/docs/
@@ -32,7 +33,7 @@ function main() {
             logger.info('次数：%s，该次循环花费时间%s秒。', count, (nextTime - currentTime) / 1000);
         }
         currentTime = nextTime;
-        getRequest(reqParams, function(body) {
+        getRequest(reqParams).then(function(body){
             var maxPN = getMaxPN(body);
             maintask(maxPN);
         });
@@ -45,12 +46,12 @@ function maintask(maxPN) {
         if (i > 0) {
             reqParams.first = false;
         }
-        getRequest(reqParams, function(body) {
+        getRequest(reqParams).then(function(body) {
             var json = JSON.parse(body);
             json.content.positionResult.result.forEach(function(item, index) {
                 item.companyLogo = 'http://www.lagou.com/' + item.companyLogo;
                 //有则不变，没有则增加
-                lagou.findOneAndUpdate(item, function(err, doc) {
+                lagou.findOneAndUpdate(item).then(function(result) {
                     // 完成则触发upsert事件
                     ep.emit('upsert');
                 });
@@ -63,17 +64,19 @@ function maintask(maxPN) {
     });
 }
 
-function getRequest(params, cb) {
+function getRequest(params) {
+    var deferred = Q.defer();
     request.post({
         url: reqUrl,
         form: params
-    }, function(err, httpResponse, body) {
-        if (err) {
-            logger.error(err);
-            throw new Error(err);
+    }, function(error, httpResponse, body) {
+        if (error) {
+            logger.error(error);
+            deferred.reject(error.toString().red);
         }
-        typeof cb === 'function' && cb(body);
+        deferred.resolve(body);
     });
+    return deferred.promise;
 }
 
 function getMaxPN(value) {
