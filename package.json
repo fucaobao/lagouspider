@@ -6,11 +6,11 @@
   "dependencies": {
     "eventproxy": "^0.3.4",
     "forever": "^0.15.2",
+    "log4js": "^0.6.36",
     "moment": "^2.13.0",
     "mongoose": "^4.4.19",
     "q": "^1.4.1",
-    "request": "^2.72.0",
-    "winston": "^2.2.0"
+    "request": "^2.72.0"
   },
   "devDependencies": {},
   "scripts": {

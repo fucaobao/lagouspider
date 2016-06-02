@@ -4,7 +4,7 @@ var Q = require('q');
 var eventproxy = require('eventproxy');
 var moment = require('moment'); //时间包http://momentjs.com/docs/
 var ep = new eventproxy();
-var logger = require('./lib/log');
+var log = require('./lib/log');
 var lagou = require('./models/dao');
 main();
 
@@ -13,8 +13,8 @@ function main() {
         var int = 0;
         for (var key in doc) {
             int += 1;
-            console.log(doc[key]);
+            log.info(doc[key]);
         }
-        console.log(int);
+        console.info(int);
     });
 }

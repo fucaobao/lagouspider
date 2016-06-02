@@ -4,7 +4,7 @@ var request = require('request');
 var eventproxy = require('eventproxy');
 var moment = require('moment'); //时间包http://momentjs.com/docs/
 var ep = new eventproxy();
-var logger = require('./lib/log');
+var log = require('./lib/log');
 var lagou = require('./models/dao');
 
 //相关参数
@@ -30,7 +30,7 @@ function main() {
     setInterval(function() {
         nextTime = Date.now();
         if(count){
-            logger.info('次数：%s，该次循环花费时间%s秒。', count, (nextTime - currentTime) / 1000);
+            log.info('次数：%s，该次循环花费时间%s秒。', count, (nextTime - currentTime) / 1000);
         }
         currentTime = nextTime;
         getRequest(reqParams).then(function(body){
@@ -71,7 +71,7 @@ function getRequest(params) {
         form: params
     }, function(error, httpResponse, body) {
         if (error) {
-            logger.error(error);
+            log.error(error);
             deferred.reject(error.toString().red);
         }
         deferred.resolve(body);
