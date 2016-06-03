@@ -12,8 +12,6 @@ var reqUrl = 'http://www.lagou.com/jobs/positionAjax.json';
 var argv = process.argv;
 var reqParams = getArgs();
 var count = 0;//执行次数
-var currentTime = 0;
-var nextTime = 0;
 
 main();
 function main() {
@@ -28,11 +26,6 @@ function main() {
         ].join('\n'));
     }
     setInterval(function() {
-        nextTime = Date.now();
-        if(count){
-            log.info('次数：%s，该次循环花费时间%s秒。', count, (nextTime - currentTime) / 1000);
-        }
-        currentTime = nextTime;
         getRequest(reqParams).then(function(body){
             var maxPN = getMaxPN(body);
             maintask(maxPN);
@@ -61,6 +54,7 @@ function maintask(maxPN) {
     // 如果upsert事件触发了maxPN次，则提示出来
     ep.after('upsert', maxPN, function(value) {
         count += 1;
+        log.info('次数：%s，当前时间：%s', count, moment().format('YYYY-MM-DD HH:mm:ss.SSS'));
     });
 }
 

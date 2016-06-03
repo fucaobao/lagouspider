@@ -73,7 +73,7 @@ DAO.prototype.findOneAndUpdate = function(params) {
     return deferred.promise;
 };
 /**
- * [findOne description]
+ * 查询所有对象
  * @param  {Object}   params JSON对象，查询条件
  */
 DAO.prototype.findOne = function(params) {
@@ -87,12 +87,64 @@ DAO.prototype.findOne = function(params) {
     return deferred.promise;
 };
 /**
- * [distinct description]
+ * 根据str查询总共的个数
  * @param  {string}   str 查询对象
  */
 DAO.prototype.distinct = function(str) {
     var deferred = Q.defer();
     model.distinct(str, function(error, result) {
+        if (error) {
+            deferred.reject(error.toString().red);
+        }
+        deferred.resolve(result);
+    });
+    return deferred.promise;
+};
+/**
+ * 分页查询
+ * @param  {Object} params 分页查询条件
+ */
+DAO.prototype.findByPage = function(params) {
+    var deferred = Q.defer();
+    var search = {};
+    for (var key in params) {
+        if (params[key]) {
+            if (key !== 'pageNo' && key !== 'pageSize') {
+                search[key] = {
+                    $regex: new RegExp(params[key].replace(/\(/, '\\(').replace(/\)/, '\\)'), 'ig')
+                };
+            }
+        }
+    }
+    var pageNo = params.pageNo;
+    var pageSize = params.pageSize;
+    var skipFrom = (pageNo * pageSize) - pageSize;
+    var query = model.find(search).skip(skipFrom).limit(pageSize)
+        /*.sort({
+        createTimeSort: -1
+    })*/
+    ;
+    query.exec(function(error, results) {
+        if (error) {
+            deferred.reject(error.toString().red);
+        }
+        deferred.resolve(results);
+    });
+    return deferred.promise;
+};
+DAO.prototype.count = function(params) {
+    var deferred = Q.defer();
+    var search = {};
+    for (var key in params) {
+        if (params[key]) {
+            if (key !== 'pageNo' && key !== 'pageSize') {
+                search[key] = {
+                    $regex: new RegExp(params[key].replace(/\(/, '\\(').replace(/\)/, '\\)'), 'ig')
+                };
+            }
+        }
+    }
+    model.count(search, function(error, result) {
         if (error) {
             deferred.reject(error.toString().red);
         }
